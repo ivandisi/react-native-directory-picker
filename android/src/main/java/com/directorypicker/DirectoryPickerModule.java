@@ -128,16 +128,24 @@ public class DirectoryPickerModule extends ReactContextBaseJavaModule implements
           return;
       }
 
+      try {
         //Handle Directory
-      if (requestCode == REQUEST_LAUNCH_DIRECTORY_CHOOSER) {
-        Uri treeUri = data.getData();
-        DocumentFile pickedDir = DocumentFile.fromTreeUri(mReactContext, treeUri);
-        response.putString("path", getPath(mReactContext, treeUri)); 
-        response.putString("dirname", pickedDir.getName());
-        response.putString("decodedUri", Uri.decode(treeUri.toString()));
-        mCallback.invoke(response);
-        return;
-      }     
+        if (requestCode == REQUEST_LAUNCH_DIRECTORY_CHOOSER) {
+            Uri treeUri = data.getData();
+            DocumentFile pickedDir = DocumentFile.fromTreeUri(mReactContext, treeUri);
+            response.putString("path", getPath(mReactContext, treeUri)); 
+            response.putString("dirname", pickedDir.getName());
+            response.putString("decodedUri", Uri.decode(treeUri.toString()));
+            mCallback.invoke(response);
+            return;
+        } 
+      } catch (ActivityNotFoundException e) {
+            e.printStackTrace();
+            response.putBoolean("isError", true);
+            mCallback.invoke(response);
+            return;
+      }
+    
     }       
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -152,7 +160,11 @@ public class DirectoryPickerModule extends ReactContextBaseJavaModule implements
                 final String type = split[0];
 
                 if ("/tree/primary".equalsIgnoreCase(type)) {
-                    return Environment.getExternalStorageDirectory() + "/" + split[1];
+                    if (split.length > 1) {
+                        return Environment.getExternalStorageDirectory() + "/" + split[1];
+                    } else {
+                        return Environment.getExternalStorageDirectory() + "/"; 
+                    }
                 }                
             }           
         }
