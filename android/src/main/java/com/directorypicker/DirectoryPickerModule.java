@@ -9,6 +9,7 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 
+import androidx.annotation.RequiresApi;
 import androidx.documentfile.provider.DocumentFile;
 import android.Manifest;
 import android.annotation.TargetApi;
@@ -17,9 +18,13 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
+
 import androidx.core.app.ActivityCompat;
 
 public class DirectoryPickerModule extends ReactContextBaseJavaModule implements ActivityEventListener {
@@ -145,7 +150,6 @@ public class DirectoryPickerModule extends ReactContextBaseJavaModule implements
 
         final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
         if (isKitKat) {
-            // ExternalStorageProvider
             if (isExternalStorageDocument(uri)) {
                 final String docId = uri.getPath();
                 final String[] split = docId.split(":");
@@ -156,10 +160,30 @@ public class DirectoryPickerModule extends ReactContextBaseJavaModule implements
                         return Environment.getExternalStorageDirectory() + "/" + split[1];
                     else
                         return  Environment.getExternalStorageDirectory() + "/";
-                }                
-            }           
+                }
+            }
         }
-        return null;
+        return "/storage" + parsePath(uri.getPath().replace("/tree", "")) + "/";
+    }
+
+    private static String parsePath(String rawPath){
+        String[] splitting = rawPath.split(":");
+        if (splitting.length > 1) {
+            String bad = splitting[0] + ":";
+            String correct = splitting[0] + "/";
+            return rawPath.replace(bad, correct);
+
+        } else {
+            return removeLastChar(rawPath);
+        }
+    }
+
+    public static String removeLastChar(String str) {
+        return removeLastChars(str, 1);
+    }
+
+    public static String removeLastChars(String str, int chars) {
+        return str.substring(0, str.length() - chars);
     }
 
     /**
@@ -174,4 +198,5 @@ public class DirectoryPickerModule extends ReactContextBaseJavaModule implements
     public void onNewIntent(Intent intent) { }
 
 }
+
 
